@@ -1,0 +1,2 @@
+model_checkpoint_path: "success_weight_test"
+all_model_checkpoint_paths: "success_weight_test"
