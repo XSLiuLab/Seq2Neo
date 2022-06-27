@@ -33,7 +33,6 @@ setup(
         'keras==2.4.3',
         'tensorflow==2.3.0',
         'agfusion==1.252',
-
     ],
     author=" Kaixuan Diao",
     author_email="diaokx@shanghaitech.edu.cn",
@@ -43,7 +42,7 @@ setup(
     url="https://github.com/XSLiuLab/Seq2Neo",
     classifiers=[
         "Programming Language :: Python :: 3.7",
-        "License :: OSI Approved :: Academic Free License v. 3.0",
+        "License :: OSI Approved :: Academic Free License (AFL)",
         "Operating System :: POSIX :: Linux",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
