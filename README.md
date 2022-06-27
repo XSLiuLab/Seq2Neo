@@ -3,7 +3,7 @@
 ## Overview
 Neoantigens derived from somatic DNA alterations are ideal cancer specific targets. However, not all somatic DNA mutations can cause immunogenicity to cancer cell, and efficient tools for predicting the immunogenicity of neo-peptide is still urgently needed. Here we present the **Seq2Neo** pipeline, which provides a one-stop solution for neo-peptide features prediction with HLA class I from raw sequencing data, and neoantigens derived from different types of genome DNA alterations, including point mutations, insertion deletions, and gene fusions are supported. Importantly a convolutional neural networks (CNN) based model has been trained to predict the immunogenicity of neoepitope. And this model shows improved performance compared with currently available tools in immunogenicity prediction in independent datasets.
 
-## Installation:
+## Installation
 Seq2Neo runs on Linux operation, and it is an open source software under academic free license (AFL) v3.0.
 
 ### Conda
@@ -37,7 +37,7 @@ We strongly recommend that you use conda command line for installation as this w
 
 ### Docker
 
-stand by
+We also provide docker image that contains all dependencies. (未完)
 
 ### Pip (not recommended)
 
@@ -135,7 +135,7 @@ optional arguments:
                         if the file is XXX_1.fq, the tumor name should be XXX
                         (default: None)
   --known-site-dir known_site_dir
-                        directory to BQSR known site (default: None)
+                        directory to BQSR known sites (default: None)
   --mutect2-dataset-dir mutect2_dataset_dir
                         directory to mutect2 needed dataset file (default:
                         None)
@@ -165,7 +165,68 @@ optional arguments:
                         HLA-A01:01)
 ```
 
+1. You need to download necessary reference files before running Seq2Neo:
 
+   - Downloading three BQSR known sites files used to recalibrate base quality score, those files should put in a directory like **bqsr_resource**, and index files are needed to accelerate the speed of Seq2Neo.  The commands are following:
+
+     ```bash
+     mkdir bqsr_resource && cd bqsr_resource
+     prefix=ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/
+     wget ${prefix}dbsnp_146.hg38.vcf.gz
+     wget ${prefix}dbsnp_146.hg38.vcf.gz.tbi
+     wget ${prefix}1000G_phase1.snps.high_confidence.hg38.vcf.gz
+     wget ${prefix}1000G_phase1.snps.high_confidence.hg38.vcf.gz.tbi
+     wget ${prefix}Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+     wget ${prefix}Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi
+     ```
+
+   - Downloading hg38 datasets of annovar via the following commands:
+
+     ```bash
+     cd /path/to/annovar
+     perl annotate_variation.pl --downdb --webfrom annovar --buildver hg38 refGene humandb/
+     ```
+
+   - Downloading the necessary reference files used to call Mutect2, those files should put in a directory like **mutect2_resource**, and index files are needed to accelerate the speed of Seq2Neo.  The commands are following:
+
+     ```bash
+     mkdir mutect2_resource && cd mutect2_resource
+     prefix=ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/Mutect2/
+     wget ${prefix}af-only-gnomad.hg38.vcf.gz
+     wget ${prefix}af-only-gnomad.hg38.vcf.gz.tbi
+     wget ${prefix}GetPileupSummaries/small_exac_common_3.hg38.vcf.gz
+     wget ${prefix}GetPileupSummaries/small_exac_common_3.hg38.vcf.gz.tbi
+     ```
+
+   - Downloading the AGFusion database and pyensembl reference genome, we select the max release of 95 to download:
+
+     ```bash
+     pyensembl install --species homo_sapiens --release 95
+     agfusion download -g hg38 --release 95 
+     ```
+
+   - Downloading the genome library of STAR-Fusion (1.10.1) to call gene fusions via the following commands:
+
+     ```bash
+     ref=GRCh38_gencode_v37_CTAT_lib_Mar012021.plug-n-play.tar.gz
+     wget https://data.broadinstitute.org/Trinity/CTAT_RESOURCE_LIB/__genome_libs_StarFv1.10/${ref}
+     tar -zxvf ${ref}
+     ```
+
+     The size of the compressed genome library is about 31 G, Chinese researchers can download with higher speed by using some useful tools like Thunder [Official Website](https://www.xunlei.com/).
+
+   - Downloading the reference genome and indexing via the following command lines:
+
+     ```
+     mkdir ref_genome && cd ref_genome
+     seq2neo download --species homo_sapiens --build GRCh38 --release 105 --dir .
+     ```
+
+2.  Suppose you have downloaded 3 files, they are tumor RNA-seq and WES data, normal WES data. Specificly, SRR2603346 for tumor RNA-seq, SRR2601737 for tumor WES and SRR2601758 for normal WES. Then you can run Seq2Neo via the following command line to obtain potential neoantigens (running on a machine with more than 50G memory and 512G hard disk space):
+
+   ```
+   seq2neo whole --ref ref_genome/Homo_sapiens_assembly38.fasta --normal-dna SRR2601758_1.fastq SRR2601758_2.fastq --tumor-dna SRR2601737_1.fastq SRR2601737_2.fastq --tumor-rna SRR2603346_1.fastq SRR2603346_2.fastq --normal-name SRR2601758 --tumor-name SRR2601737 --known-site-dir bqsr_resource/ --mutect2-dataset-dir mutect2_resource/ --annovar-db-dir /path/to/annovar/humandb/ --genome-lib-dir /path/to/GRCh38_gencode_v37_CTAT_lib_Mar012021.plug-n-play/ctat_genome_lib_build_dir/ --agfusion-db agfusion.homo_sapiens.95.db --out out/ --len 8 9 10 11 --threadN 20 --java-options '"-Xmx40G"' --hlahd-dir /path/to/hlahd
+   ```
 
 -----------------------
 
@@ -183,6 +244,12 @@ optional arguments:
   --build BUILD      which build to download (default: GRCh38)
   --release RELEASE  which release to download (default: 105)
   --dir [DIR]        where to store (default: .)
+```
+
+This module will help users download and index reference genomes from the Ensembl database. The usage of the module is:
+
+```
+seq2neo download --species homo_sapiens --build GRCh38 --release 105 --dir .
 ```
 
 -------------
@@ -208,4 +275,34 @@ optional arguments:
   --outdir OUTDIR       if multiple mode, specifying the path to your output
                         folder (default: None)
 ```
+
+The module provides the opportunity for users to predict the immunogenicity scores of provided peptides and HLAs.
+
+If you want to query a single epitope (peptide + HLA), for example you want to query peptide SVQIISCQY along with HLA-A30:02. You need to type:
+
+```
+seq2neo immuno --mode "single" --epitope "SVQIISCQY" --hla "HLA-A30:02"
+```
+
+If you want to query multiple epitopes, you just need to prepare a csv file like this:
+
+```
+Pep,HLA
+ADTSEARPFW,HLA-B44:02
+ADVLSPVLVK,HLA-A03:01
+AELEEVSSY,HLA-B44:02
+AELLAKQLY,HLA-B44:02
+AEQQGACPGL,HLA-B44:02
+AEVSVLYTV,HLA-B44:02
+AEYQDMHSY,HLA-B44:02
+AINRPTVLK,HLA-A03:01
+```
+
+Then you run:
+
+```
+seq2neo --mode "multiple" --inputfile data/test_input.csv --outdir data/
+```
+
+You will get two files, **immuno_input_file.csv** and **cnn_results.csv**, the former includes the predictions of TAP and IC50 performed by netCTLpan and netMHCpan4.1b respectively, the latter is final results including immunogenicity scores.
 

@@ -7,6 +7,7 @@ def toVCF_mutect2(args, tmpPATH, resultsPATH):
     input = [os.path.join(tmpPATH, 'tumor_BQSR.bam'), os.path.join(tmpPATH, "normal_BQSR.bam")]
     normal_name = args.normal_name
     out = os.path.join(tmpPATH, "somatic.vcf")
+    germline_resource = os.path.join(args.mutect2_dataset_dir, "af-only-gnomad.hg38.vcf.gz")  # 生殖突变
 
     print("Executing Mutect2 Command Line")
     mutect2_cmd = Mutect2Commandline(ref=args.ref,
@@ -15,13 +16,14 @@ def toVCF_mutect2(args, tmpPATH, resultsPATH):
                                      f1r2_gz_file=f1r2_gz_file,
                                      Normal_name=normal_name,
                                      threads=args.threadN,
-                                     java_options=args.java_options)
+                                     java_options=args.java_options,
+                                     germline_resource=germline_resource)
 
     mutect2_cmd.run_mutect2()
 
     # GetPileupSummaries
-    interval_list = os.path.join(args.mutect2_dataset_dir, "af-only-gnomad.hg38.SNP_biallelic.vcf.gz")
-    V = os.path.join(args.mutect2_dataset_dir, "af-only-gnomad.hg38.SNP_biallelic.vcf.gz")
+    interval_list = os.path.join(args.mutect2_dataset_dir, "small_exac_common_3.hg38.vcf.gz")
+    V = os.path.join(args.mutect2_dataset_dir, "small_exac_common_3.hg38.vcf.gz")
     # tumor GetPileupSummaries
     O = os.path.join(tmpPATH, "tumor.pileups.table")
 
