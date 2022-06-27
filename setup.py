@@ -27,6 +27,14 @@ setup(
             "seq2neo = seq2neo.main:main",
         ]
     },
+    install_requires=[
+        'protobuf<3.20',
+        'biopython==1.77',
+        'keras==2.4.3',
+        'tensorflow==2.3.0',
+        'agfusion==1.252',
+
+    ],
     author=" Kaixuan Diao",
     author_email="diaokx@shanghaitech.edu.cn",
     description="Seq2Neo: a comprehensive pipeline for cancer neoantigen immunogenicity prediction",
