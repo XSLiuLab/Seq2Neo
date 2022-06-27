@@ -32,7 +32,7 @@ setup(
     description="Seq2Neo: a comprehensive pipeline for cancer neoantigen immunogenicity prediction",
     keywords="neoantigen fusion immunogenicity prediction sequencing cancer",
     long_description_content_type="text/markdown",
-    url="https://github.com/diaokx/Seq2Neo",
+    url="https://github.com/XSLiuLab/Seq2Neo",
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: Academic Free License v. 3.0",
