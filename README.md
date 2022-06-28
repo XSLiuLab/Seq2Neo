@@ -56,8 +56,8 @@ However, you should install all of dependencies manually. It includes the follow
 - star=2.7.8a
 - tpmcalculator=0.0.4
 - vcftools=0.1.16
-- Bowtie2 == 2.3.5
-- GATK == 4.2.5
+- bowtie2 == 2.3.5
+- gatk == 4.2.5
 ```
 
 Then, you should also install packages mentioned in the Conda section.
