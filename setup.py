@@ -16,7 +16,7 @@ for dirpath, dirnames, filenames in os.walk("seq2neo/function/immuno_Prediction/
 
 setup(
     name="Seq2Neo",
-    version="v1.0",
+    version="v1.1",
     packages=find_packages(),
     include_package_data=True,
     package_data={
