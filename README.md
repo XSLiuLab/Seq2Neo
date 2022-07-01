@@ -6,7 +6,7 @@ Neoantigens derived from somatic DNA alterations are ideal cancer-specific targe
 
 ## Installation
 
-Seq2Neo runs on Linux operation, and it is open-source software under an academic free license (AFL) v3.0.
+Seq2Neo runs on an Linux operation system like CentOS system (recommended), and it is open-source software under an academic free license (AFL) v3.0.
 
 ### Conda
 
