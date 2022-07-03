@@ -2,15 +2,15 @@
 
 ## Overview
 
-Neoantigens derived from somatic DNA alterations are ideal cancer-specific targets. However, not all somatic DNA mutations can result in immunogenicity in cancer cells, and efficient tools for predicting the immunogenicity of neoepitope are still urgently needed. Here we present the Seq2Neo pipeline, which provides a one-stop solution for neoepitope features prediction from raw sequencing data, and neoantigens derived from different types of genome DNA alterations, including point mutations, insertion deletions, and gene fusions are supported. Importantly a convolutional neural networks (CNN) based model has been trained to predict the immunogenicity of neoepitope. And this model shows improved performance compared with currently available tools in immunogenicity prediction in independent datasets.
+Neoantigens derived from somatic DNA alterations are ideal cancer-specific targets. However, not all somatic DNA mutations are immunogenic tumor cells, and efficient tools for predicting the immunogenicity of neoepitope are still urgently needed. Here we present the Seq2Neo pipeline, which provides a one-stop solution for neoepitope features prediction from raw sequencing data, and neoantigens derived from different types of genome DNA alterations, including point mutations, insertion deletions, and gene fusions are supported. Importantly a convolutional neural networks (CNN) based model has been trained to predict the immunogenicity of neoepitope. Moreover, this model shows improved performance compared to currently available tools in immunogenicity prediction in independent datasets.
 
 ## Installation
 
-Seq2Neo runs on an Linux operation system like CentOS system (recommended), and it is open-source software under an academic free license (AFL) v3.0.
+Seq2Neo runs on a Linux operation system like the CentOS system (recommended), and it is open-source software under an academic free license (AFL) v3.0.
 
 ### Conda
 
-We strongly recommend that you use conda command line for installation as this will solve dependencies automatically. The web of the package is https://anaconda.org/liuxslab/seq2neo. 
+We strongly recommend using the conda command line for installation as this will solve dependencies automatically. The web of the package is https://anaconda.org/liuxslab/seq2neo. 
 
 1. Firstly, you need to install the [Anaconda](https://www.anaconda.com/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html#) (recommended), and set channels in the `~/.condarc` file like this:
 
@@ -70,7 +70,7 @@ You can install the stable release of **Seq2Neo** with:
 
 > pip install Seq2Neo
 
-However, you should install all of dependencies manually. It includes the following softwares and packages that should be installed in advance:
+However, you should install all of the dependencies manually. It includes the following softwares and packages that should be installed in advance:
 
 ``` plain
 - bamtools=2.5.1
@@ -89,7 +89,7 @@ Then, you should also install the packages mentioned in the Conda section.
 
 ## Usage
 
-Seq2Neo consists of 3 modules, which are whole, download, and immuno. The module of whole is responsible for running the whole process, the download module can download a specified version of a reference genome from Ensembl database and index, and the last module of immuno supports the prediction of immunogenicity score of specified peptides and MHCs:
+Seq2Neo consists of 3 modules, which are whole, download, and immuno. The module of whole is responsible for running the entire process, the download module can download a specified version of a reference genome from the Ensembl database and index, and the last module of immuno supports the prediction of immunogenicity score of specified peptides and MHCs:
 
 ``` plain
 usage: seq2neo [-h] {whole,immuno,download} ...
@@ -247,7 +247,7 @@ optional arguments:
      seq2neo download --species homo_sapiens --build GRCh38 --release 105 --dir .
      ```
 
-2. Suppose you have downloaded 3 files, they are tumor RNA-seq and WES data, normal WES data. Specifically, SRR2603346 is for tumor RNA-seq, SRR2601737 is for tumor WES, and SRR2601758 is for normal WES. Then you can run Seq2Neo via the following command line to obtain potential neoantigens (running on a machine with more than 50G memory and 512G hard disk space):
+2. Suppose you have downloaded three files, they are tumor RNA-seq and WES data, normal WES data. Specifically, SRR2603346 is for tumor RNA-seq, SRR2601737 is for tumor WES, and SRR2601758 is for normal WES. Then you can run Seq2Neo via the following command line to obtain potential neoantigens (running on a machine with more than 50G memory and 512G hard disk space):
 
    ```
    seq2neo whole --ref ref_genome/Homo_sapiens_assembly38.fasta --normal-dna SRR2601758_1.fastq SRR2601758_2.fastq --tumor-dna SRR2601737_1.fastq SRR2601737_2.fastq --tumor-rna SRR2603346_1.fastq SRR2603346_2.fastq --normal-name SRR2601758 --tumor-name SRR2601737 --known-site-dir bqsr_resource/ --mutect2-dataset-dir mutect2_resource/ --annovar-db-dir /path/to/annovar/humandb/ --genome-lib-dir /path/to/GRCh38_gencode_v37_CTAT_lib_Mar012021.plug-n-play/ctat_genome_lib_build_dir/ --agfusion-db agfusion.homo_sapiens.95.db --out out/ --len 8 9 10 11 --threadN 20 --java-options '"-Xmx40G"' --hlahd-dir /path/to/hlahd
@@ -329,4 +329,4 @@ Then you run:
 seq2neo --mode multiple --inputfile data/test_input.csv --outdir data/
 ```
 
-You will get two files, **immuno_input_file.csv** and **cnn_results.csv**, the former includes the predictions of TAP and IC50 performed by netCTLpan and netMHCpan4.1b respectively, and the latter is the final results including immunogenicity scores.
+You will get two files, **immuno_input_file.csv** and **cnn_results.csv**. The former includes the predictions of TAP and IC50 performed by netCTLpan and netMHCpan4.1b, respectively, and the latter is the final results including immunogenicity scores.
