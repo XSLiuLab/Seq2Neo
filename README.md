@@ -16,7 +16,6 @@ We strongly recommend using the conda command line for installation as this will
 
    ```
    channels:
-     - conda-forge
      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda
      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/menpo
@@ -26,9 +25,9 @@ We strongly recommend using the conda command line for installation as this will
      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch
      - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/simpleitk
    ```
-
+   
    You can replace Tsinghua mirrors with other convenient mirrors.
-
+   
 2. Secondly, you should execute the following commands to create a new environment named Seq2Neo or other on your Linux system, and then activate it:
 
    ``` shell
