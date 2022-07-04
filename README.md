@@ -2,7 +2,7 @@
 
 ## Overview
 
-Neoantigens derived from somatic DNA alterations are ideal cancer-specific targets. However, not all somatic DNA mutations are immunogenic tumor cells, and efficient tools for predicting the immunogenicity of neoepitope are still urgently needed. Here we present the Seq2Neo pipeline, which provides a one-stop solution for neoepitope features prediction from raw sequencing data, and neoantigens derived from different types of genome DNA alterations, including point mutations, insertion deletions, and gene fusions are supported. Importantly a convolutional neural networks (CNN) based model has been trained to predict the immunogenicity of neoepitope. Moreover, this model shows improved performance compared to currently available tools in immunogenicity prediction in independent datasets.
+Neoantigens derived from somatic DNA alterations are ideal cancer-specific targets. However, not all somatic DNA mutations can result in immunogenicity in cancer cells, and efficient tools for predicting the immunogenicity of neoepitope are still urgently needed. Here we present the Seq2Neo pipeline, which provides a one-stop solution for neoepitope features prediction from raw sequencing data, and neoantigens derived from different types of genome DNA alterations, including point mutations, insertion deletions, and gene fusions are supported. Importantly a convolutional neural networks (CNN) based model has been trained to predict the immunogenicity of neoepitope. And this model shows improved performance compared with currently available tools in immunogenicity prediction in independent datasets.
 
 ## Installation
 
