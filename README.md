@@ -49,7 +49,7 @@ We strongly recommend using the conda command line for installation as this will
    - netMHCpan == 4.1.b  [NetMHCpan - 4.1 - Services - DTU Health Tech](https://services.healthtech.dtu.dk/service.php?NetMHCpan-4.1)
    - STAR-Fusion == 1.10.1 [STAR-Fusion/STAR-Fusion: STAR-Fusion codebase (github.com)](https://github.com/STAR-Fusion/STAR-Fusion)
 
-   Following corresponding official instructions to install those packages on your system.
+   Following corresponding official instructions to install those packages on your system. 
 
 ### Docker
 
@@ -251,6 +251,8 @@ optional arguments:
    ```
    seq2neo whole --ref ref_genome/Homo_sapiens_assembly38.fasta --normal-dna SRR2601758_1.fastq SRR2601758_2.fastq --tumor-dna SRR2601737_1.fastq SRR2601737_2.fastq --tumor-rna SRR2603346_1.fastq SRR2603346_2.fastq --normal-name SRR2601758 --tumor-name SRR2601737 --known-site-dir bqsr_resource/ --mutect2-dataset-dir mutect2_resource/ --annovar-db-dir /path/to/annovar/humandb/ --genome-lib-dir /path/to/GRCh38_gencode_v37_CTAT_lib_Mar012021.plug-n-play/ctat_genome_lib_build_dir/ --agfusion-db agfusion.homo_sapiens.95.db --out out/ --len 8 9 10 11 --threadN 20 --java-options '"-Xmx40G"' --hlahd-dir /path/to/hlahd
    ```
+   
+3. The final result of the module whole is in the folder of **final_result**, including **final_results_neo.txt** and **filtered_neo.txt**. The final_results_neo.txt includes all peptides from the detected mutation sites. After applying the criteria of TAP>0, TPM>0, immunogenicity>0.5 and IC50<=500, filtered_neo.txt is acquired (ranking by IC50).
 
 -----------------------
 
