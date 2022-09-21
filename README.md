@@ -304,7 +304,7 @@ optional arguments:
 
 The module allows users to predict the immunogenicity scores of provided peptides and HLAs.
 
-For example, if you want to query a single epitope (peptide + HLA), you want to query peptide SVQIISCQY along with HLA-A30:02. You need to type:
+For example, if you want to query a single peptide SVQIISCQY along with HLA-A30:02. You need to type:
 
 ```
 seq2neo immuno --mode single --epitope SVQIISCQY --hla HLA-A30:02
@@ -327,7 +327,7 @@ AINRPTVLK,HLA-A03:01
 Then you run:
 
 ```
-seq2neo --mode multiple --inputfile data/test_input.csv --outdir data/
+seq2neo immuno --mode multiple --inputfile data/test_input.csv --outdir data/
 ```
 
 You will get two files, **immuno_input_file.csv** and **cnn_results.csv**. The former includes the predictions of TAP and IC50 performed by netCTLpan and netMHCpan4.1b, respectively, and the latter is the final results including immunogenicity scores.
