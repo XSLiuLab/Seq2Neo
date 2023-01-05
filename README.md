@@ -58,6 +58,7 @@ We also provide docker image ([liuxslab/seq2neo - Docker Image | Docker Hub](htt
 ```
 docker run -it -v /path/to/resource_files:/home/resource_files liuxslab/seq2neo:latest /bin/bash
 cd /home/seq2neo
+cd biosoft/hlahd.1.4.0/ && sh install.sh && cd ../../ # installation of HLAHD 1.4.0
 conda activate Seq2Neo
 ```
 
@@ -242,8 +243,11 @@ optional arguments:
    - Downloading the reference genome and indexing via the following command lines:
 
      ```
-     mkdir ref_genome && cd ref_genome
-     seq2neo download --species homo_sapiens --build GRCh38 --release 105 --dir .
+     wget https://github.com/broadinstitute/gatk/raw/master/src/test/resources/large/Homo_sapiens_assembly38.fasta.gz
+     tar -zxvf Homo_sapiens_assembly38.fasta.gz
+     bwa index -a bwtsw Homo_sapiens_assembly38.fasta  ## build index for Homo_sapiens_assembly38.fasta
+     samtools faidx Homo_sapiens_assembly38.fasta
+     gatk CreateSequenceDictionary -R Homo_sapiens_assembly38.fasta -O Homo_sapiens_assembly38.dict
      ```
 
 2. Suppose you have downloaded three files, they are tumor RNA-seq and WES data, normal WES data. Specifically, SRR2603346 is for tumor RNA-seq, SRR2601737 is for tumor WES, and SRR2601758 is for normal WES. Then you can run Seq2Neo via the following command line to obtain potential neoantigens (running on a machine with more than 50G memory and 512G hard disk space):
