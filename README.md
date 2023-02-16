@@ -59,8 +59,7 @@ We also provide a docker image ([liuxslab/seq2neo - Docker Image | Docker Hub](h
 
 ```
 docker run -it -v /path/to/resource_files:/home/resource_files liuxslab/seq2neo:latest /bin/bash
-cd /home/seq2neo
-cd biosoft/hlahd.1.4.0/ && sh install.sh && cd ../../ # installation of HLAHD 1.4.0
+cd /home/  # enter home directory so you can find the binding resource files
 conda activate Seq2Neo
 ```
 
