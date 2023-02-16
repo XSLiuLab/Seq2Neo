@@ -10,22 +10,11 @@ class DownloadArgumentParser:
         )
 
         parser.add_argument(
-            '--species',
-            type=str,
-            help='which species to download',
-            default="homo_sapiens")
-
-        parser.add_argument(
             '--build',
             type=str,
-            help='which build to download',
-            default="GRCh38")
-
-        parser.add_argument(
-            '--release',
-            type=int,
-            help='which release to download',
-            default=105)
+            help='which build to download, hg38 / hg19',
+            choices=['hg19', 'hg38'],
+            default="hg38")
 
         # 默认是当前目录
         parser.add_argument(

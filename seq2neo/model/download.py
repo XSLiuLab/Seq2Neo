@@ -16,33 +16,27 @@ def define_parser():
     return DownloadArgumentParser().parser
 
 
-# http://ftp.ensembl.org/pub/release-105/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-# release=105, species=homo_sapiens, build=GRCh38
 class Reference:
     def __init__(self, arg):
         self.arg = arg
-        self.species = arg.species
         self.build = arg.build
-        self.release = arg.release
         self.dir = os.path.expanduser(arg.dir)
         self.refName = None
 
     def download_dna_ref(self):
-        dna_url = "http://ftp.ensembl.org/pub/release-{release}/fasta/{species}/dna/Homo_sapiens.{build}.dna.primary_assembly.fa.gz".format(
-            release=self.release,
-            species=self.species,
-            build=self.build
+        dna_url = "https://github.com/broadinstitute/gatk/raw/master/src/test/resources/large/Homo_sapiens_assembly{build}.fasta.gz".format(
+            build=self.build[-2:]
         )
 
-        print("Download Reference sequence data from Ensembl")
+        print("Download Reference sequence data from GATK")
         mk(self.dir)
         dl = sp.run(["wget %s -P %s" % (dna_url, self.dir)], shell=True)
         if dl.returncode == 0:
             print("Successfully download " + dna_url)
             self.refName = dna_url.split("/")[-1]
-            print("uncompress the" + self.refName)
+            print("uncompress the " + self.refName)
             sp.run("gunzip %s" % self.refName, shell=True)  # 解压，直接覆盖原来的压缩包
-            print("Successfully uncompress the" + self.refName)
+            print("Successfully uncompress the " + self.refName)
             # 重新命名
             self.refName = '.'.join(self.refName.split('.')[:-1])
         else:
@@ -69,7 +63,9 @@ class Reference:
 
 def main(args_input=None):
     if args_input is None:
-        args_input = sys.argv[1:]
+        print("No argument specified!")
+        sys.exit(-1)
+    
     parser = define_parser()
     args = parser.parse_args(args_input)
 

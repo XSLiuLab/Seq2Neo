@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor
 
@@ -20,12 +21,15 @@ def binding_Prediction(args, resultsPATH):
     # 暂时只采用NetMHCpan
     method = ["NetMHCpan"]
 
-    if args.data_type == "fastq":
+    if args.data_type in ["fastq", "without-tumor-rna", "without-normal-dna", "only-tumor-dna"] and args.hlas is None:
         hlas = GettingHLA(os.path.join(resultsPATH, '%s_final.result.txt' % args.tumor_name))  # 获取并解析HLAHD的分型结果
     else:
-        hlas = args.hla
-
+        hlas = args.hlas
     print("HLAs are %s" % hlas)  # 显示样本的HLA信息
+    
+    if len(hlas) == 0:
+        print("lost HLAs")
+        sys.exit(-1)
 
     for l in args.len:
         pool.submit(mutiProcessor_Prediction, l, hlas, resultsPATH, args.tumor_name, filepath, sample_id, method)
@@ -47,10 +51,15 @@ def binding_Prediction_fusion(args, agfusion_dir, resultsPATH):  # 预测genefus
     # 暂时只采用NetMHCpan
     method = ["NetMHCpan"]
 
-    if args.data_type == "fastq":
+    if args.data_type in ["fastq", "without-tumor-rna", "without-normal-dna", "only-tumor-dna"] and args.hlas is None:
         hlas = GettingHLA(os.path.join(resultsPATH, '%s_final.result.txt' % args.tumor_name))  # 获取并解析HLAHD的分型结果
     else:
-        hlas = args.hla
+        hlas = args.hlas
+    print("HLAs are %s" % hlas)  # 显示样本的HLA信息
+    
+    if len(hlas) == 0:
+        print("lost HLAs")
+        sys.exit(-1)
 
     for l in args.len:
         pool.submit(mutiProcessor_Prediction_fusion, l, hlas, resultsPATH, args.tumor_name, filepath, sample_id,
@@ -76,17 +85,19 @@ def immunoPrediction(resultsPATH):  # 预测免疫原性并整合
     df3.to_csv(os.path.join(resultsPATH, 'neo/all.csv'), index=False, encoding='utf-8')
 
 
-def filterNeo(finalPATH, resultsPATH):
+def filterNeo(args, finalPATH, resultsPATH):
     print("Making Neoantigen Filtering")
 
-    final_file = os.path.join(finalPATH, 'filtered_neo.txt')  # 筛选过后的新抗原
+    final_file = os.path.join(finalPATH, 'filtered_neo.csv')  # 筛选过后的新抗原
 
-    final_df = Integration_tpm(finalPATH, resultsPATH)  # 获取未经过滤的结果
+    final_df = Integration_tpm(args, finalPATH, resultsPATH)  # 获取未经过滤的结果
 
     # 过滤条件，TAP>0, immunogenicity>0.5, TPM>0, 按照IC50排序
+    print("Thresholds are TAP>0, immunogenicity>0.5, TPM>0 (if available), IC50<=500, sorted by IC50")
     final_df = final_df[final_df.TAP > 0]
     final_df = final_df[final_df.immunogenicity > 0.5]
-    final_df = final_df[final_df.TPM > 0]
+    if args.data_type not in ['without-tumor-rna', 'only-tumor-dna', 'vcf']:
+        final_df = final_df[final_df.TPM > 0]
     final_df = final_df[final_df.IC50 <= 500]
     final_df = final_df.sort_values(by="IC50", ascending=True)
 

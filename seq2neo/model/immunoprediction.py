@@ -10,7 +10,9 @@ def define_parser():
 
 def main(args_input=None):
     if args_input is None:
-        args_input = sys.argv[1:]
+        print("No argument specified!")
+        sys.exit(-1)
+    
     parser = define_parser()
     args = parser.parse_args(args_input)
 
@@ -26,7 +28,7 @@ def main(args_input=None):
         IC50 = single_cal(args, "ic50")
         TAP = single_cal(args, "tap")
         score = computing_sigle(epitope, hla, IC50, TAP)
-        print("The immunogenicity score of the peptide is", score[0, 0])
+        print("The immunogenicity score of the epitope is", score[0, 0])
     elif mode == 'multiple':
         print("mode is multiple")
         print("input file is {}".format(args.inputfile))

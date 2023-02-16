@@ -3,6 +3,8 @@ import os
 from setuptools import setup, find_packages
 import sys
 
+import subprocess as sp
+
 if sys.version_info < (3, 7):
     print("This python version is not supported:")
     print(sys.version)
@@ -16,11 +18,11 @@ for dirpath, dirnames, filenames in os.walk("seq2neo/function/immuno_Prediction/
 
 setup(
     name="Seq2Neo",
-    version="v1.1",
+    version="v2.1",
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        'seq2neo.function.immuno_Prediction': data_files
+        'seq2neo.function.immuno_Prediction': data_files,
     },
     entry_points={
         "console_scripts": [

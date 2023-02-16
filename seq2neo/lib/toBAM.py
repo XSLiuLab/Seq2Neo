@@ -8,11 +8,11 @@ from seq2neo.function import *
 
 def toBAM_dna_normal(args, tmpPATH, resultsPATH):
 
-    if args.data_type == 'fastq':
+    if args.data_type in ["fastq", "without-tumor-rna"]:
         normal_sorted_bam = fastq_part_normal(args, tmpPATH, resultsPATH)
     elif args.data_type == 'sam':
         normal_sorted_bam = sam_part_normal(args, tmpPATH)
-    else:
+    elif args.data_type == 'sort_bam':
         normal_sorted_bam = args.normal_sorted_bam
 
     # MarkDuplicate
@@ -27,6 +27,7 @@ def toBAM_dna_normal(args, tmpPATH, resultsPATH):
                                                 CREATE_INDEX=True,
                                                 java_options=args.java_options)
     normal_mark_cmd()
+    
     # BQSR
     print("BQSR normal marked bam")
     normal_bqsr_out = os.path.join(tmpPATH, "normal_BQSR.bam")
@@ -47,13 +48,13 @@ def toBAM_dna_normal(args, tmpPATH, resultsPATH):
     sp.check_call(rm_cmd, shell=True)
 
 
-def toBAM_dna_tumor(args, tmpPATH):
+def toBAM_dna_tumor(args, tmpPATH, resultsPATH):
 
-    if args.data_type == 'fastq':
-        tumor_sorted_bam = fastq_part_tumor(args, tmpPATH)
+    if args.data_type in ["fastq", "without-tumor-rna", "without-normal-dna", "only-tumor-dna"]:
+        tumor_sorted_bam = fastq_part_tumor(args, tmpPATH, resultsPATH)
     elif args.data_type == 'sam':
         tumor_sorted_bam = sam_part_tumor(args, tmpPATH)
-    else:
+    elif args.data_type == 'sort_bam':
         tumor_sorted_bam = args.tumor_sorted_bam
 
     # MarkDuplicate
@@ -68,6 +69,7 @@ def toBAM_dna_tumor(args, tmpPATH):
                                                CREATE_INDEX=True,
                                                java_options=args.java_options)
     tumor_mark_cmd()
+    
     # BQSR
     print("BQSR tumor marked bam")
     tumor_bqsr_out = os.path.join(tmpPATH, "tumor_BQSR.bam")
@@ -87,7 +89,7 @@ def toBAM_dna_tumor(args, tmpPATH):
     rm_cmd = '''find %s -type f -not -name "*BQSR*" -print0 | xargs -0 rm -f''' % tmpPATH
     sp.check_call(rm_cmd, shell=True)
 
-
+# 辅助处理函数
 def fastq_part_normal(args, tmpPATH, resultsPATH):
 
     print("Executing Normal Fastp Command Line")
@@ -105,24 +107,27 @@ def fastq_part_normal(args, tmpPATH, resultsPATH):
                                         w=args.threadN)
     normal_fastp_cmd()
 
-    print("Executing HLATyping Command Line")
-    freq_data = os.path.join(args.hlahd_dir, 'freq_data')
-    gene_split = os.path.join(args.hlahd_dir, 'HLA_gene.split.txt')
-    dictionary = os.path.join(args.hlahd_dir, 'dictionary')
-    hlahd_cmd = HLAHDCommandLine(t=args.threadN,
-                                 m=args.mdna,
-                                 f=freq_data,
-                                 fasta_file1=normal_out1,
-                                 fasta_file2=normal_out2,
-                                 gene_split_file=gene_split,
-                                 HLA_fasta_dir=dictionary,
-                                 sampleID=args.tumor_name,
-                                 out_dir=tmpPATH)
-    hlahd_cmd()
-
-    result_path = os.path.join(tmpPATH, '%s/result/%s_final.result.txt' % (args.tumor_name, args.tumor_name))
-    mv_cmd = 'cp %s %s' % (result_path, resultsPATH)
-    sp.check_call(mv_cmd, shell=True)
+    if args.hlas is None:
+        print("Executing HLATyping Command Line (Normal)")
+        freq_data = os.path.join(args.hlahd_dir, 'freq_data')
+        gene_split = os.path.join(args.hlahd_dir, 'HLA_gene.split.txt')
+        dictionary = os.path.join(args.hlahd_dir, 'dictionary')
+        hlahd_cmd = HLAHDCommandLine(t=args.threadN,
+                                    m=args.mdna,
+                                    f=freq_data,
+                                    fasta_file1=normal_out1,
+                                    fasta_file2=normal_out2,
+                                    gene_split_file=gene_split,
+                                    HLA_fasta_dir=dictionary,
+                                    sampleID=args.tumor_name,
+                                    out_dir=tmpPATH)
+        hlahd_cmd()
+        
+        result_path = os.path.join(tmpPATH, '%s/result/%s_final.result.txt' % (args.tumor_name, args.tumor_name))
+        cp_cmd = 'cp %s %s' % (result_path, resultsPATH)
+        sp.check_call(cp_cmd, shell=True)
+    else:
+        print("Using user specified HLAs")
 
     print("Executing Normal BWA-MEM Command Line")
     normal_out = os.path.join(tmpPATH, "normal.sam")
@@ -192,7 +197,7 @@ def sam_part_normal(args, tmpPATH):
     return normal_sorted_bam
 
 
-def fastq_part_tumor(args, tmpPATH):
+def fastq_part_tumor(args, tmpPATH, resultsPATH):
 
     print("Executing Tumor Fastp Command Line")
     tumor_out1 = os.path.join(tmpPATH, "tumor_1_qc.fastq")
@@ -208,6 +213,29 @@ def fastq_part_tumor(args, tmpPATH):
                                        h=tumor_html,
                                        w=args.threadN)
     tumor_fastp_cmd()
+    
+    # 当没有Normal DNA时，采用Tumor DNA的HLA信息
+    if args.normal_name is None and args.hlas is None:
+        print("Executing HLATyping Command Line (Tumor)")
+        freq_data = os.path.join(args.hlahd_dir, 'freq_data')
+        gene_split = os.path.join(args.hlahd_dir, 'HLA_gene.split.txt')
+        dictionary = os.path.join(args.hlahd_dir, 'dictionary')
+        hlahd_cmd = HLAHDCommandLine(t=args.threadN,
+                                     m=args.mdna,
+                                     f=freq_data,
+                                     fasta_file1=tumor_out1,
+                                     fasta_file2=tumor_out2,
+                                     gene_split_file=gene_split,
+                                     HLA_fasta_dir=dictionary,
+                                     sampleID=args.tumor_name,
+                                     out_dir=tmpPATH)
+        hlahd_cmd()
+
+        result_path = os.path.join(tmpPATH, '%s/result/%s_final.result.txt' % (args.tumor_name, args.tumor_name))
+        cp_cmd = 'cp %s %s' % (result_path, resultsPATH)
+        sp.check_call(cp_cmd, shell=True)
+    else:
+        print("Using user specified HLAs")
 
     print("Executing Tumor BWA-MEM Command Line")
     tumor_out = os.path.join(tmpPATH, "tumor.sam")

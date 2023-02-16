@@ -2,6 +2,7 @@
 convert raw results to standard tables
 """
 import os
+import sys
 import math
 import pandas as pd
 import numpy as np
@@ -143,15 +144,27 @@ def Integration(inputdir, outdir):
 
     for _, __, files in os.walk(mhci):  # 调用os.listdir()，返回文件列表的顺序是任意的
         for file in sorted(files):  # 将文件排序
+            if os.path.getsize(os.path.join(mhci, file)) < 200:  # 文件为空，代表MHC不存在于软件中
+                HLA = file.split('_')[6].split('.')[0]
+                print(f'{HLA} is not in netMHCpan, will be ignored')
+                continue
             df = pd.read_csv(os.path.join(mhci, file))
             df = df.loc[:, ['MHC', 'Peptide', 'Aff(nM)']]
             df1 = pd.concat([df1, df], axis=0, ignore_index=True)
 
     for _, __, files in os.walk(tap):
         for file in sorted(files):
+            if os.path.getsize(os.path.join(tap, file)) < 200:
+                HLA = file.split('_')[6].split('.')[0]
+                print(f'{HLA} is not in netCTLpan, will be ignored')
+                continue
             df = pd.read_csv(os.path.join(tap, file))
             df = df.loc[:, ["Sequence Name", "Allele", "Peptide", "TAP"]]
             df2 = pd.concat([df2, df], axis=0, ignore_index=True)
+    
+    if df1.size == 0 or df2.size == 0:
+        print("There is nothing, seq2neo will be end!!!")
+        sys.exit(-1)
 
     df3 = pd.concat([df2, df1['Aff(nM)']], axis=1)
     df3.columns = ["line", "HLA", "Peptide", "TAP", "IC50"]
@@ -166,21 +179,26 @@ def Integration(inputdir, outdir):
     df3.to_csv(result3, index=False, encoding="utf-8")
 
 
-def Integration_tpm(finalPATH, resultsPATH):
-    # 读入TPM
-    tpm_file = os.path.join(resultsPATH, 'Aligned.out.sorted_genes.ent')
-    tpm_df = pd.read_csv(tpm_file, sep="\t")
-    tpm_df = tpm_df.loc[:, ["Gene_Id", "start", "end", "TPM", "Type"]]
-    tpm_df.columns = ["GeneName", "start", "end", "TPM", "Type"]
+def Integration_tpm(args, finalPATH, resultsPATH):
+
+    if args.data_type not in ['without-tumor-rna', 'only-tumor-dna', 'vcf']:
+        have_tumor_rna = True
+        # 读入TPM
+        tpm_file = os.path.join(resultsPATH, 'Aligned.out.sorted_genes.ent')
+        tpm_df = pd.read_csv(tpm_file, sep="\t")
+        tpm_df = tpm_df.loc[:, ["Gene_Id", "start", "end", "TPM", "Type"]]
+        tpm_df.columns = ["GeneName", "start", "end", "TPM", "Type"]
+        
+        # 读入gene fusion字典
+        dictionary_fusion = os.path.join(resultsPATH, 'dictionary_fusion.txt')
+        dic_fusion_df = pd.read_csv(dictionary_fusion)
+    else:
+        have_tumor_rna = False
 
     # 读入snv和indels字典
     dictionary = os.path.join(resultsPATH, 'dictionary.txt')
     dic_df = pd.read_csv(dictionary)
     dic_df.drop('Alias', axis=1, inplace=True)  # 只删除Alias列，保留其它列
-
-    # 读入gene fusion字典
-    dictionary_fusion = os.path.join(resultsPATH, 'dictionary_fusion.txt')
-    dic_fusion_df = pd.read_csv(dictionary_fusion)
 
     # 读入之前整合的文件，准备加入TPM和其它信息
     neopeptides = os.path.join(resultsPATH, 'neo/all.csv')
@@ -195,49 +213,62 @@ def Integration_tpm(finalPATH, resultsPATH):
     dic_mrna_mt_wt_df = pd.merge(dic_mt_wt_df, dic_mrna_df, how="inner", on=["line", "length"])  # 合并成新字典
     dic_mrna_mt_wt_df.drop(["isFrameShift_x", "isFrameShift_y"], axis=1, inplace=True)  # 去除无用的列
 
-    # 将gene fusion和snv/indel区分开，便于后续操作
-    series_mask = neopeptides_df.line.str.startswith('line')  # str属性可以对字符串列以向量化的方式处理
-    mask = list(series_mask)
-    rmask = list(series_mask == False)
-    snv_indel_df = neopeptides_df[mask]  # 挑选snv_indel的数据
-    fusion_df = neopeptides_df[rmask]  # 挑选gene fusion的数据
+    if have_tumor_rna:
+        # 将gene fusion和snv/indel区分开，便于后续操作
+        series_mask = neopeptides_df.line.str.startswith('line')  # str属性可以对字符串列以向量化的方式处理
+        mask = list(series_mask)
+        rmask = list(series_mask == False)
+        snv_indel_df = neopeptides_df[mask]  # 挑选snv_indel的数据
+        fusion_df = neopeptides_df[rmask]  # 挑选gene fusion的数据；没有gene fusion的数据时，为空数据框
+    else:
+        snv_indel_df = neopeptides_df
 
-    # 读入处理后的tpm_df
-    tpm_new_df = GettingTPM(dic_df, dic_fusion_df, tpm_df, resultsPATH)
+    if have_tumor_rna:
+        # 读入处理后的tpm_df
+        tpm_new_df = GettingTPM(dic_df, dic_fusion_df, tpm_df, resultsPATH)
 
     # 为snv_indel_df补充信息
     snv_indel_new_df = pd.merge(snv_indel_df, dic_df, how="inner", on="line")
-    snv_indel_new_df = pd.merge(snv_indel_new_df, tpm_new_df, how="inner", on=["line", "GeneName"])
+    if have_tumor_rna:
+        snv_indel_new_df = pd.merge(snv_indel_new_df, tpm_new_df, how="inner", on=["line", "GeneName"])
     snv_indel_new_df = pd.merge(snv_indel_new_df, dic_mrna_mt_wt_df, how="inner", on=["line", "length"])
     snv_indel_new_df.pop("line")
 
-    # 为gene fusion补充信息，两个基因的平均TPM
-    fusion_df.rename(columns={'line': 'GeneName'}, inplace=True)
-    fusion_new_df = pd.merge(fusion_df, tpm_new_df, how="inner", on="GeneName")
-    fusion_new_df.rename(columns={'line': 'influence'}, inplace=True)  # line包含gene fusion 是out-of-frame还是in-frame
-    fusion_new_df["amino_change"] = "###"
-    fusion_new_df["mutation_type"] = "Gene Fusion"
-    fusion_new_df["chr"] = "###"  # 暂时将这些设为未知
-    fusion_new_df["ref"] = "###"
-    fusion_new_df["mut"] = "###"
-    fusion_new_df["location"] = "###"
-    fusion_new_df["mtseq"] = "###"
-    fusion_new_df["wtseq"] = "###"
-    fusion_new_df["mt_mrna_seq"] = "###"
-    fusion_new_df["wt_mrna_seq"] = "###"
+    if have_tumor_rna:
+        # 为gene fusion补充信息，两个基因的平均TPM
+        fusion_df.rename(columns={'line': 'GeneName'}, inplace=True)
+        fusion_new_df = pd.merge(fusion_df, tpm_new_df, how="inner", on="GeneName")
+        fusion_new_df.rename(columns={'line': 'influence'}, inplace=True)  # line包含gene fusion 是out-of-frame还是in-frame
+        fusion_new_df["amino_change"] = "###"
+        fusion_new_df["mutation_type"] = "Gene Fusion"
+        fusion_new_df["chr"] = "###"  # 暂时将这些设为未知
+        fusion_new_df["ref"] = "###"
+        fusion_new_df["mut"] = "###"
+        fusion_new_df["location"] = "###"
+        fusion_new_df["mtseq"] = "###"
+        fusion_new_df["wtseq"] = "###"
+        fusion_new_df["mt_mrna_seq"] = "###"
+        fusion_new_df["wt_mrna_seq"] = "###"
 
     # 调整列的顺序，合并输出
-    snv_indel_new_df = snv_indel_new_df.loc[:, ["HLA", "Peptide", "length", "TAP", "IC50", "immunogenicity",
-                                                "TPM", "GeneName", "amino_change", "influence", "mutation_type",
-                                                "chr", "ref", "mut", "location", "mtseq", "wtseq", "mt_mrna_seq",
-                                                "wt_mrna_seq"]]
-    fusion_new_df = fusion_new_df.loc[:, ["HLA", "Peptide", "length", "TAP", "IC50", "immunogenicity",
-                                          "TPM", "GeneName", "amino_change", "influence", "mutation_type",
-                                          "chr", "ref", "mut", "location", "mtseq", "wtseq", "mt_mrna_seq",
-                                          "wt_mrna_seq"]]
-    final_df = pd.concat([snv_indel_new_df, fusion_new_df], axis=0, ignore_index=True)  # 合并
-    final_df.to_csv(os.path.join(finalPATH, 'final_results_neo.txt'), index=False, encoding="utf-8")  # 保存
-
+    if have_tumor_rna:
+        snv_indel_new_df = snv_indel_new_df.loc[:, ["HLA", "Peptide", "length", "TAP", "IC50", "immunogenicity",
+                                                    "TPM", "GeneName", "amino_change", "influence", "mutation_type",
+                                                    "chr", "ref", "mut", "location", "mtseq", "wtseq", "mt_mrna_seq",
+                                                    "wt_mrna_seq"]]
+        fusion_new_df = fusion_new_df.loc[:, ["HLA", "Peptide", "length", "TAP", "IC50", "immunogenicity",
+                                              "TPM", "GeneName", "amino_change", "influence", "mutation_type",
+                                              "chr", "ref", "mut", "location", "mtseq", "wtseq", "mt_mrna_seq",
+                                              "wt_mrna_seq"]]
+        final_df = pd.concat([snv_indel_new_df, fusion_new_df], axis=0, ignore_index=True)  # 合并
+    else:
+        snv_indel_new_df = snv_indel_new_df.loc[:, ["HLA", "Peptide", "length", "TAP", "IC50", "immunogenicity",
+                                                    "GeneName", "amino_change", "influence", "mutation_type",
+                                                    "chr", "ref", "mut", "location", "mtseq", "wtseq", "mt_mrna_seq",
+                                                    "wt_mrna_seq"]]
+        final_df = snv_indel_new_df
+    
+    final_df.to_csv(os.path.join(finalPATH, 'final_results_neo.csv'), index=False, encoding="utf-8")  # 保存
     return final_df
 
 
@@ -312,6 +343,7 @@ def GettingHLA(filepath: str):
 
     mhci_final = []  # 最终返回的HLA列表
     # 去除pipeline中不存在的HLA
+    print("Removing HLAs not exsiting in Seq2Neo pipeline!!!")
     basepath = os.path.abspath(__file__)  # 获取当前文件的绝对路径
     folder = '/'.join(basepath.split('/')[:-2])  # 此时是seq2neo文件目录
     file_path = os.path.join(folder, 'function/immuno_Prediction/data/class1_pseudosequences.csv')

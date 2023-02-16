@@ -18,8 +18,7 @@ def predict_bindingI(method, hla, length, file, outfile):  # 传入的length应�
             f=file,
             BA="BA",
             l=length,
-            a=hla
-        )
+            a=hla)
         print(netmhcpan41_cmd)
         netmhcpan41_cmd(stdout=outfile)
 
@@ -96,8 +95,7 @@ def mutiThread_predict_TAP(key, value, hla, length, filepath, sample_name, path)
     netctlpan_cmd = NetCTLpanCommandLine(
         f=value,
         l=length,
-        a=hla
-    )
+        a=hla)
     print(netctlpan_cmd)
     netctlpan_cmd(stdout=outfile)
 

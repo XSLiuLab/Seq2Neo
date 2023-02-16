@@ -265,13 +265,13 @@ def createDictionary(Input_File, Output_File):
         Output.writelines(contents)
 
 
-def createDictionary_mrna(Input_File, Output_File, dic_path, Peptide_Len: list):
+def createDictionary_mrna(Input_File, Output_Dir, dic_path, Peptide_Len: list):
     df_dic = pd.read_csv(dic_path)
     end = round(len(df_dic) / len(Peptide_Len))  # 因为有可能有很多的
     filtered_lines = list(df_dic.line)[0:end]  # 存有需要的line
     isFS = list(df_dic.isFrameShift)[0:end]  # 存储是否是fs，不是为0，是为1
 
-    dic_wt_mt = os.path.join(Output_File, 'dictionary_mrna.txt')  # 创建wt及对应的mt的字典(mrna)
+    dic_wt_mt = os.path.join(Output_Dir, 'dictionary_mrna.txt')  # 创建wt及对应的mt的字典(mrna)
     dic_records = []  # 记录着对应行
 
     for n in Peptide_Len:

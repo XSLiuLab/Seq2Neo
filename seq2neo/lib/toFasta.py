@@ -1,9 +1,32 @@
 import os
+import subprocess as sp
 from seq2neo.function.Neoantigen_Prediction import *
+from seq2neo.function.Mutation_Calling import SelectPassMutationCommandline
 
 
 def toFasta_annovar(args, resultsPATH):
-    uncovert_vcf = os.path.join(resultsPATH, 'pass.recode.vcf')  # 从toVCF.py而来
+    if args.data_type == 'vcf':
+        # Select PASS
+        print("Executing Select PASS Command Line")
+        vcf = args.vcf
+        out = os.path.join(resultsPATH, "pass")
+        select_cmd = SelectPassMutationCommandline(
+            remove_filtered_all="remove-filtered-all",
+            vcf=vcf,
+            out=out,
+            recode="recode")
+        select_cmd()
+        
+        # norm
+        print("Executing Norm VCF Command Line")
+        unnorm_vcf = os.path.join(resultsPATH, 'pass.recode.vcf')
+        norm_vcf = os.path.join(resultsPATH, 'pass.recode.norm.vcf')
+        norm_cmd = "cat %s | \
+                    bcftools norm --multiallelics -both --output-type v - | \
+                    bcftools norm --fasta-ref %s --output-type v - > %s" % (unnorm_vcf, args.ref, norm_vcf)
+        sp.check_call(norm_cmd, shell=True)
+    
+    uncovert_vcf = os.path.join(resultsPATH, 'pass.recode.norm.vcf')
     output_prefix = os.path.join(resultsPATH, 'variant')
 
     # Convert to Annovar input files
@@ -13,8 +36,7 @@ def toFasta_annovar(args, resultsPATH):
         format="vcf4",
         filter="pass",
         allsample="allsample",
-        outfile=output_prefix
-    )
+        outfile=output_prefix)
     covert_cmd()
 
     # Annotation with Annovar
@@ -28,8 +50,7 @@ def toFasta_annovar(args, resultsPATH):
         buildver="hg38",
         comment="comment",
         outfile=prefix,
-        db=args.annovar_db_dir
-    )
+        db=args.annovar_db_dir)
     annotation_cmd()
 
     # get coding change
